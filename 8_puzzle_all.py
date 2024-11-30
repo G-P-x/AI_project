@@ -182,8 +182,9 @@ if __name__ == "__main__":
     start_sequences = {
         1: '102743865', # solution at depth 9
         2: '328407615', # solution at depth 28
-        3: '513824076', # solution at depth 16, with this sequence, compute_heuristic_1 is not working
+        3: '513824076', # solution at depth 16
         4: '142807365', # solution at depth 20
+        5: '281503476', # solution at depth 16
     }
     assert create_matrix('102743865') == [[1, 0, 2], [7, 4, 3], [8, 6, 5]]
     assert create_matrix('328407615') == [[3, 2, 8], [4, 0, 7], [6, 1, 5]]
