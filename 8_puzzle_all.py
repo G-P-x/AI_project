@@ -164,7 +164,6 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]):
             print_action_sequence(goal_node=node)
             print("Number of nodes expanded: ", counter.expanded_nodes)
             print("Node in the fringe: ", len(fringe))
-            time.sleep(1)
             return    
         counter.expanded_nodes += 1     
         fringe.extend(children)
@@ -200,5 +199,7 @@ if __name__ == "__main__":
     # A_star(start_sequence, goal_state)
     for s in start_sequences:
         print(f"Start sequence: {start_sequences[s]}")
+        start_time = time.time()
         A_star(create_matrix(start_sequences[s]), goal_state)
+        print("Execution time: {:.5f} seconds".format(time.time() - start_time))
         print("\n")
