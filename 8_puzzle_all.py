@@ -1,6 +1,7 @@
 from counter import Counter
 import copy
 import time
+import charts as ch
 
 class Node_8_puzzle():
     def __init__(self, parent: 'Node_8_puzzle', state: list[list], heuristic, action: str):
@@ -135,10 +136,14 @@ def print_action_sequence(goal_node: Node_8_puzzle) -> None:
     return None
 
 def chosen_heuristic(state: list[list[int]], goal: dict):
-    return compute_heuristic_1(state, goal)
+    # return compute_heuristic_1(state, goal)
     return heuristic_manhattan_distance(state, goal)
 
-def A_star(initial_state: list[list[int]], goal_state: list[list[int]]):
+def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
+    '''A* algorithm to solve the 8-puzzle, returns a dictionary with the
+    'goal_node',
+    'expanded_nodes':, 
+    'nodes_in_fringe':'''
     counter = Counter()
     root = Node_8_puzzle(None, initial_state, chosen_heuristic(initial_state, goal_dict), None)
     # root = Node_8_puzzle(None, initial_state, heuristic_manhattan_distance(initial_state, goal_dict), None)
@@ -149,18 +154,24 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]):
 
     while fringe:
         # sort the fringe based on the path cost + heuristic value
-        # fringe.sort(key=lambda x: x.approx_cost)
+        # fringe.sort(key=lambda x: x.approx_cost) # increse the time complexity
         # pop the node with the lowest cost
         # fringe.pop(0)
 
         node = min(fringe, key=lambda x: x.approx_cost)
-        fringe.remove(node)
+        fringe.remove(node) # remove the node selected for expansion from the fringe
         # print(f"Node {node.state}, cost: {node.approx_cost}")
         # expand the node
         children = expand_node(node_to_expand=node)      
         # check if the goal state has been reached
         if children == None:
-            # print the result
+            # node is the result
+            result = {
+                'goal_node': node,
+                'expanded_nodes': counter.expanded_nodes,
+                'nodes_in_fringe': len(fringe)
+            }
+            return result
             print_action_sequence(goal_node=node)
             print("Number of nodes expanded: ", counter.expanded_nodes)
             print("Node in the fringe: ", len(fringe))
@@ -178,13 +189,20 @@ def create_matrix(values: str):
 
 if __name__ == "__main__":
     # initial state of the 8-puzzle
-    start_sequences = {
-        1: '102743865', # solution at depth 9
-        2: '328407615', # solution at depth 28
-        3: '513824076', # solution at depth 16
-        4: '142807365', # solution at depth 20
-        5: '281503476', # solution at depth 16
-    }
+    # start_sequences = {
+    #     1: '102743865', # solution at depth 9
+    #     2: '328407615', # solution at depth 28
+    #     3: '513824076', # solution at depth 16
+    #     4: '142807365', # solution at depth 20
+    #     5: '281503476', # solution at depth 16
+    # }
+    start_sequences = [
+    '102743865',
+    '328407615',
+    '513824076',
+    '142807365',
+    '281503476'
+    ]
     assert create_matrix('102743865') == [[1, 0, 2], [7, 4, 3], [8, 6, 5]]
     assert create_matrix('328407615') == [[3, 2, 8], [4, 0, 7], [6, 1, 5]]
     start_sequence = create_matrix('328407615')
@@ -196,10 +214,21 @@ if __name__ == "__main__":
 
     # goal state of the 8-puzzle
     goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
+    times = []
+    algorithms = ['A*']
+    results = []
     # A_star(start_sequence, goal_state)
     for s in start_sequences:
-        print(f"Start sequence: {start_sequences[s]}")
+        # print(f"Start sequence: {start_sequences[s]}")
+        print(f"Start sequence: {s}")
         start_time = time.time()
-        A_star(create_matrix(start_sequences[s]), goal_state)
+        # result = A_star(create_matrix(start_sequences[s]), goal_state)
+        result = A_star(create_matrix(s), goal_state)
+        times.append(time.time() - start_time)
+        results.append(result)
+        print(f"Expanded nodes: {result['expanded_nodes']}. Nodes in fringe: {result['nodes_in_fringe']}")
         print("Execution time: {:.5f} seconds".format(time.time() - start_time))
+        print_action_sequence(goal_node=result['goal_node'])
         print("\n")
+    
+    ch.plot_sequence_results_A_star(start_sequences, times, [r['nodes_in_fringe'] for r in results], [r['expanded_nodes'] for r in results])
