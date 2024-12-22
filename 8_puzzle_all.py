@@ -136,7 +136,7 @@ def print_action_sequence(goal_node: Node_8_puzzle) -> None:
     return None
 
 def chosen_heuristic(state: list[list[int]], goal: dict):
-    # return compute_heuristic_1(state, goal)
+    return compute_heuristic_1(state, goal)
     return heuristic_manhattan_distance(state, goal)
 
 def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
