@@ -3,6 +3,7 @@ import copy
 import time
 import charts as ch
 import heuristic_functions as h_f_
+import gc
 
 class Node_8_puzzle():
     def __init__(self, parent: 'Node_8_puzzle', state: list[list], action: str):
@@ -164,6 +165,26 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
         fringe.extend(children)
     print("No solution found within the depth limit of {n}".format(n=max_step))
 
+def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], limit = 10) -> dict[str: any]:
+    root = Node_8_puzzle(parent=None, state=initial_state, action=None)
+    counter = Counter()
+    fringe = [root]
+    while fringe:
+        node = fringe.pop(0)
+        counter.expanded_nodes += 1
+        children = expand_node(node_to_expand=node, max_moves=limit)
+        if children is None:
+            # goal state reached
+            result = {
+                'goal_node': node,
+                'expanded_nodes': counter.expanded_nodes,
+                'nodes_in_fringe': len(fringe)
+            }
+            return result
+        # if node.n_moves >= limit:
+        #     continue
+        fringe = children + fringe
+
 def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
     '''A* algorithm to solve the 8-puzzle, returns a dictionary with the
     'goal_node',
@@ -217,8 +238,11 @@ def print_results(result: dict[str: any], finish_time) -> None:
     '''print the results of the search algorithm'''
     print(f"\tExpanded nodes: {result['expanded_nodes']}. Nodes in fringe: {result['nodes_in_fringe']}")
     print("\tExecution time: {:.8f} milliseconds".format(finish_time * 1000))
+    objects_in_memory = [obj for obj in gc.get_objects() if isinstance(obj, Node_8_puzzle)]
+    print(f"\tmemory: {len(objects_in_memory)}" )
     print_action_sequence(goal_node=result['goal_node'])
     return None
+
 if __name__ == "__main__":
     # initial state of the 8-puzzle
     # start_sequences = {
@@ -243,28 +267,37 @@ if __name__ == "__main__":
         4: (1, 0), 5: (1, 1), 6: (1, 2),
         7: (2, 0), 8: (2, 1), 0: (2, 2)
     }  # used to calculate the heuristic value
-
-    # goal state of the 8-puzzle
     goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
-    # times = []
-    algorithms = [A_star, BFS]
-    # results = []
-    # # A_star(start_sequence, goal_state)
-    # for s in start_sequences:
-    #     # print(f"Start sequence: {start_sequences[s]}")
-    #     print(f"Start sequence: {s}")
-    #     start_time = time.time()
-    #     # result = A_star(create_matrix(start_sequences[s]), goal_state)
-    #     result = A_star(create_matrix(s), goal_state)
-    #     times.append(time.time() - start_time)
-    #     results.append(result)
-    #     print_results(result, times[-1])
-    #     print("\n")
-    print("\n\nStart sequence: 102743865")
-    for algorithm in algorithms:
-        print(f"\n\tAlgorithm: {algorithm.__name__}")        
+    times = []
+    algorithms = [A_star, BFS, limited_DFS]
+    i = 1
+    if i == 0:
+        results = []
+        # A_star(start_sequence, goal_state)
+        for s in start_sequences:
+            # print(f"Start sequence: {start_sequences[s]}")
+            print(f"Start sequence: {s}")
+            start_time = time.time()
+            # result = A_star(create_matrix(start_sequences[s]), goal_state)
+            result = A_star(create_matrix(s), goal_state)
+            times.append(time.time() - start_time)
+            results.append(result)
+            print_results(result, times[-1])
+            print("\n")
+    elif i == 1:
+        print("\n\nStart sequence: 102743865")
+        for algorithm in algorithms:
+            print(f"\n\tAlgorithm: {algorithm.__name__}")        
+            start_time = time.time()
+            result = algorithm(start_sequence, goal_state)
+            print_results(result, time.time() - start_time)
+    else:
+        print("\n\nStart sequence: 120453786: goal = 102453786")
+        goal_state = [[1, 0, 2], [4, 5, 3], [7, 8, 6]]
+        print
+        start_sequence = create_matrix('120453786')
         start_time = time.time()
-        result = algorithm(start_sequence, goal_state)
+        result = limited_DFS(start_sequence, goal_state)
         print_results(result, time.time() - start_time)
 
     
