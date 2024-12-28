@@ -5,7 +5,6 @@ BFS.py
 __pycache__/
 example.py
 general_search_alogrithm_BFS.py
-heuristic_functions.py
 matrixs_comparison.c
 sorting.c
 structures.py
