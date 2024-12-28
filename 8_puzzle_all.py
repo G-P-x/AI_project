@@ -103,8 +103,8 @@ def set_of_actions(row: int, col: int):
         actions.append(right)
     return actions
 
-def expand_node(node_to_expand: Node_8_puzzle) -> list[Node_8_puzzle]:
-    '''expand the node and return the children nodes with only parent, state and action'''
+def expand_node(node_to_expand: Node_8_puzzle, max_moves = 30) -> list[Node_8_puzzle]:
+    '''expand the node and return the children nodes with only parent, state and action. None if the goal state is reached'''
     if node_to_expand.state == goal_state:
         return None
     children = []
@@ -115,7 +115,7 @@ def expand_node(node_to_expand: Node_8_puzzle) -> list[Node_8_puzzle]:
         # check if the child state is already in the path
         if not check_already_visited(child_state, node_to_expand):
             child = Node_8_puzzle(parent=node_to_expand, state=child_state, action=action.__name__)
-            if child.n_moves > 30:
+            if child.n_moves > max_moves:
                 continue
             children.append(child)
     return children
@@ -132,13 +132,37 @@ def print_action_sequence(goal_node: Node_8_puzzle) -> None:
         actions.append(goal_node.action)
         goal_node = goal_node.parent
     actions.reverse()
-    print(actions)
-    print("Number of moves: ", len(actions))
+    print(f"\t{actions}")
+    print("\tNumber of moves: ", len(actions))
     return None
 
 def chosen_heuristic(state: list[list[int]], goal: dict):
     return h_f_.h_2(state, goal)
     return heuristic_manhattan_distance(state, goal)
+
+def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
+    '''Breadth-first search algorithm to solve the 8-puzzle, returns a dictionary with the
+    'goal_node',
+    'expanded_nodes':, 
+    'nodes_in_fringe':'''
+    counter = Counter()
+    root = Node_8_puzzle(parent=None, state=initial_state, action=None)
+    fringe = [root]
+    counter.expanded_nodes = 0
+    max_step = 10
+    while fringe:
+        node = fringe.pop(0)
+        children = expand_node(node_to_expand=node, max_moves=max_step)
+        if children == None:
+            result = {
+                'goal_node': node,
+                'expanded_nodes': counter.expanded_nodes,
+                'nodes_in_fringe': len(fringe)
+            }
+            return result
+        counter.expanded_nodes += 1
+        fringe.extend(children)
+    print("No solution found within the depth limit of {n}".format(n=max_step))
 
 def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
     '''A* algorithm to solve the 8-puzzle, returns a dictionary with the
@@ -189,6 +213,12 @@ def create_matrix(values: str):
         matrix.append([int(values[i]), int(values[i+1]), int(values[i+2])])
     return matrix
 
+def print_results(result: dict[str: any], finish_time) -> None:
+    '''print the results of the search algorithm'''
+    print(f"\tExpanded nodes: {result['expanded_nodes']}. Nodes in fringe: {result['nodes_in_fringe']}")
+    print("\tExecution time: {:.8f} milliseconds".format(finish_time * 1000))
+    print_action_sequence(goal_node=result['goal_node'])
+    return None
 if __name__ == "__main__":
     # initial state of the 8-puzzle
     # start_sequences = {
@@ -207,7 +237,7 @@ if __name__ == "__main__":
     ]
     assert create_matrix('102743865') == [[1, 0, 2], [7, 4, 3], [8, 6, 5]]
     assert create_matrix('328407615') == [[3, 2, 8], [4, 0, 7], [6, 1, 5]]
-    start_sequence = create_matrix('328407615')
+    start_sequence = create_matrix('102743865')
     goal_dict = {
         1: (0, 0), 2: (0, 1), 3: (0, 2),
         4: (1, 0), 5: (1, 1), 6: (1, 2),
@@ -216,21 +246,26 @@ if __name__ == "__main__":
 
     # goal state of the 8-puzzle
     goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
-    times = []
-    algorithms = ['A*']
-    results = []
-    # A_star(start_sequence, goal_state)
-    for s in start_sequences:
-        # print(f"Start sequence: {start_sequences[s]}")
-        print(f"Start sequence: {s}")
+    # times = []
+    algorithms = [A_star, BFS]
+    # results = []
+    # # A_star(start_sequence, goal_state)
+    # for s in start_sequences:
+    #     # print(f"Start sequence: {start_sequences[s]}")
+    #     print(f"Start sequence: {s}")
+    #     start_time = time.time()
+    #     # result = A_star(create_matrix(start_sequences[s]), goal_state)
+    #     result = A_star(create_matrix(s), goal_state)
+    #     times.append(time.time() - start_time)
+    #     results.append(result)
+    #     print_results(result, times[-1])
+    #     print("\n")
+    print("\n\nStart sequence: 102743865")
+    for algorithm in algorithms:
+        print(f"\n\tAlgorithm: {algorithm.__name__}")        
         start_time = time.time()
-        # result = A_star(create_matrix(start_sequences[s]), goal_state)
-        result = A_star(create_matrix(s), goal_state)
-        times.append(time.time() - start_time)
-        results.append(result)
-        print(f"Expanded nodes: {result['expanded_nodes']}. Nodes in fringe: {result['nodes_in_fringe']}")
-        print("Execution time: {:.5f} seconds".format(time.time() - start_time))
-        print_action_sequence(goal_node=result['goal_node'])
-        print("\n")
+        result = algorithm(start_sequence, goal_state)
+        print_results(result, time.time() - start_time)
+
     
-    ch.plot_sequence_results_A_star(start_sequences, times, [r['nodes_in_fringe'] for r in results], [r['expanded_nodes'] for r in results])
+    # ch.plot_sequence_results_A_star(start_sequences, times, [r['nodes_in_fringe'] for r in results], [r['expanded_nodes'] for r in results])
