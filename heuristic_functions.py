@@ -23,6 +23,17 @@ def manhattan_distance(goal: dict, state: list) -> int:
             distance += abs(row - goal[tile][0]) + abs(col - goal[tile][1])
     return distance
 
+def heuristic_manhattan_distance(state: list[list[int]], goal: dict) -> int:
+    assert isinstance(goal, dict), "goal must be a dictionary"
+    assert isinstance(state, list), "state must be a list"
+    distance = 0
+    for row in range(3):
+        for col in range(3):
+            tile = state[row][col]
+            if tile != 0:
+                distance += abs(row - goal[tile][0]) + abs(col - goal[tile][1])
+    return distance
+
 def h_2(state: list[list[int]], goal: dict):
         # calculate the number of moves that each tile is from its goal position
         # for each tile in the current state, calculate the manhattan distance to its goal position

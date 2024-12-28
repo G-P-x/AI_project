@@ -2,14 +2,15 @@ from counter import Counter
 import copy
 import time
 import charts as ch
+import heuristic_functions as h_f_
 
 class Node_8_puzzle():
-    def __init__(self, parent: 'Node_8_puzzle', state: list[list], heuristic, action: str):
+    def __init__(self, parent: 'Node_8_puzzle', state: list[list], action: str):
         self.parent = parent  # pointer to the parent node
         self.state = state
         self.n_moves = parent.n_moves + 1 if parent else 0
-        self.approx_cost = heuristic + self.n_moves
         self.action = "root node" if parent is None else action 
+        self.cost = 0
 
 def heuristic_manhattan_distance(state: list[list[int]], goal: dict) -> int:
     assert isinstance(goal, dict), "goal must be a dictionary"
@@ -90,7 +91,7 @@ def right(node_right: Node_8_puzzle, row: int, col: int):
     return new_state
 
 
-def set_of_actions(node: Node_8_puzzle, row: int, col: int):
+def set_of_actions(row: int, col: int):
     actions = []
     if row > 0:
         actions.append(up)
@@ -102,27 +103,27 @@ def set_of_actions(node: Node_8_puzzle, row: int, col: int):
         actions.append(right)
     return actions
 
-def expand_node(node_to_expand: Node_8_puzzle):
+def expand_node(node_to_expand: Node_8_puzzle) -> list[Node_8_puzzle]:
+    '''expand the node and return the children nodes with only parent, state and action'''
     if node_to_expand.state == goal_state:
         return None
     children = []
     b_row, b_col = find_blank_tile(node_to_expand.state)  # find the blank tile
-    actions = set_of_actions(node_to_expand, b_row, b_col)
+    actions = set_of_actions(b_row, b_col)
     for action in actions:
         child_state = action(node_to_expand, b_row, b_col)
         # check if the child state is already in the path
         if not check_already_visited(child_state, node_to_expand):
-            child = Node_8_puzzle(node_to_expand, child_state, chosen_heuristic(child_state, goal_dict), action.__name__)
-            # child = Node_8_puzzle(node_to_expand, child_state, heuristic_manhattan_distance(child_state, goal_dict), action.__name__)
+            child = Node_8_puzzle(parent=node_to_expand, state=child_state, action=action.__name__)
             if child.n_moves > 30:
                 continue
             children.append(child)
-    # print_children(children)
     return children
 
 def print_children(children: list[Node_8_puzzle]) -> None:
+    '''debugging function to print the children nodes'''
     for child in children:
-        print(f"State: {child.state}. Cost: {child.approx_cost}")
+        print(f"State: {child.state}. Cost: {child.cost}")
     return None
 
 def print_action_sequence(goal_node: Node_8_puzzle) -> None:
@@ -136,7 +137,7 @@ def print_action_sequence(goal_node: Node_8_puzzle) -> None:
     return None
 
 def chosen_heuristic(state: list[list[int]], goal: dict):
-    return compute_heuristic_1(state, goal)
+    return h_f_.h_2(state, goal)
     return heuristic_manhattan_distance(state, goal)
 
 def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
@@ -145,7 +146,8 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
     'expanded_nodes':, 
     'nodes_in_fringe':'''
     counter = Counter()
-    root = Node_8_puzzle(None, initial_state, chosen_heuristic(initial_state, goal_dict), None)
+    root = Node_8_puzzle(parent=None, state=initial_state, action=None)
+    root.cost = chosen_heuristic(initial_state, goal_dict) + root.n_moves
     # root = Node_8_puzzle(None, initial_state, heuristic_manhattan_distance(initial_state, goal_dict), None)
     
     # create a list to store the nodes that have not been expanded yet
@@ -158,11 +160,12 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
         # pop the node with the lowest cost
         # fringe.pop(0)
 
-        node = min(fringe, key=lambda x: x.approx_cost)
+        node = min(fringe, key=lambda x: x.cost)
         fringe.remove(node) # remove the node selected for expansion from the fringe
         # print(f"Node {node.state}, cost: {node.approx_cost}")
         # expand the node
-        children = expand_node(node_to_expand=node)      
+        children = expand_node(node_to_expand=node)  
+
         # check if the goal state has been reached
         if children == None:
             # node is the result
@@ -171,14 +174,13 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
                 'expanded_nodes': counter.expanded_nodes,
                 'nodes_in_fringe': len(fringe)
             }
-            return result
-            print_action_sequence(goal_node=node)
-            print("Number of nodes expanded: ", counter.expanded_nodes)
-            print("Node in the fringe: ", len(fringe))
-            return    
-        counter.expanded_nodes += 1     
+            return result   
+        counter.expanded_nodes += 1  # increment the number of expanded nodes
+        # compute the heuristic value for each child
+        for child in children:
+            child.cost = chosen_heuristic(child.state, goal_dict) + child.n_moves   
         fringe.extend(children)
-    print(f"No solution found whitin the depth limit of 30")
+    # print(f"No solution found whitin the depth limit of 30")
 
 def create_matrix(values: str):
     assert len(values) == 9, "The length of the sequence must be 9"
