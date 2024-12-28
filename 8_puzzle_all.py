@@ -13,33 +13,6 @@ class Node_8_puzzle():
         self.action = "root node" if parent is None else action 
         self.cost = 0
 
-def heuristic_manhattan_distance(state: list[list[int]], goal: dict) -> int:
-    assert isinstance(goal, dict), "goal must be a dictionary"
-    assert isinstance(state, list), "state must be a list"
-    distance = 0
-    for row in range(3):
-        for col in range(3):
-            tile = state[row][col]
-            if tile != 0:
-                distance += abs(row - goal[tile][0]) + abs(col - goal[tile][1])
-    return distance
-
-def compute_heuristic_1(state: list[list[int]], goal: dict):
-        # calculate the number of moves that each tile is from its goal position
-        # for each tile in the current state, calculate the manhattan distance to its goal position
-        # sum all the distances to get the heuristic value
-        distance = 0
-        total_distance = 0
-        for row in range(3):
-            for col in range(3):
-                tile = state[row][col] # get the integer value of the tile
-                if tile != 0:
-                    distance = abs(row - goal[tile][0]) + abs(col - goal[tile][1])
-                    if distance > 1:
-                        distance *= 1.4 # from 1.4 onwards, the heuristic is not admissible for sure
-                    total_distance += distance
-        return total_distance
-
 def find_blank_tile(state: list[list[int]]):
     for l in state:
         if 0 in l:
@@ -155,6 +128,7 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
         node = fringe.pop(0)
         children = expand_node(node_to_expand=node, max_moves=max_step)
         if children == None:
+            print_memory_usage()
             result = {
                 'goal_node': node,
                 'expanded_nodes': counter.expanded_nodes,
@@ -175,6 +149,7 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
         children = expand_node(node_to_expand=node, max_moves=limit)
         if children is None:
             # goal state reached
+            print_memory_usage()
             result = {
                 'goal_node': node,
                 'expanded_nodes': counter.expanded_nodes,
@@ -183,6 +158,7 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
             return result
         # if node.n_moves >= limit:
         #     continue
+        # the garbage collector will remove the nodes that are not needed or referenced
         fringe = children + fringe
 
 def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
@@ -213,6 +189,7 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
 
         # check if the goal state has been reached
         if children == None:
+            print_memory_usage()
             # node is the result
             result = {
                 'goal_node': node,
@@ -225,7 +202,7 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
         for child in children:
             child.cost = chosen_heuristic(child.state, goal_dict) + child.n_moves   
         fringe.extend(children)
-    # print(f"No solution found whitin the depth limit of 30")
+    print(f"No solution found whitin the depth limit of 30")
 
 def create_matrix(values: str):
     assert len(values) == 9, "The length of the sequence must be 9"
@@ -238,11 +215,12 @@ def print_results(result: dict[str: any], finish_time) -> None:
     '''print the results of the search algorithm'''
     print(f"\tExpanded nodes: {result['expanded_nodes']}. Nodes in fringe: {result['nodes_in_fringe']}")
     print("\tExecution time: {:.8f} milliseconds".format(finish_time * 1000))
-    objects_in_memory = [obj for obj in gc.get_objects() if isinstance(obj, Node_8_puzzle)]
-    print(f"\tmemory: {len(objects_in_memory)}" )
     print_action_sequence(goal_node=result['goal_node'])
     return None
 
+def print_memory_usage():
+    objects_in_memory = [obj for obj in gc.get_objects() if isinstance(obj, Node_8_puzzle)]
+    print(f"\tnodes in memory: {len(objects_in_memory)}" )
 if __name__ == "__main__":
     # initial state of the 8-puzzle
     # start_sequences = {
