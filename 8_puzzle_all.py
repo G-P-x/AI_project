@@ -111,8 +111,10 @@ def print_action_sequence(goal_node: Node_8_puzzle) -> None:
     return None
 
 def chosen_heuristic(state: list[list[int]], goal: dict):
+    # return h_f_.h_3(state, goal)
+    # return h_f_.bad_heuristic(state, goal)
     return h_f_.h_2(state, goal)
-    return heuristic_manhattan_distance(state, goal)
+    # return h_f_.manhattan_distance(goal, state)
 
 def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
     '''Breadth-first search algorithm to solve the 8-puzzle, returns a dictionary with the
@@ -160,6 +162,44 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
         #     continue
         # the garbage collector will remove the nodes that are not needed or referenced
         fringe = children + fringe
+
+def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
+    '''Greedy search algorithm to solve the 8-puzzle, returns a dictionary with the
+    'goal_node',
+    'expanded_nodes':, 
+    'nodes_in_fringe':'''
+    counter = Counter()
+    root = Node_8_puzzle(parent=None, state=initial_state, action=None)
+    root.cost = chosen_heuristic(initial_state, goal_dict)
+    # root = Node_8_puzzle(None, initial_state, heuristic_manhattan_distance(initial_state, goal_dict), None)
+    
+    # create a list to store the nodes that have not been expanded yet
+    fringe = [root]
+    counter.expanded_nodes = 0
+
+    while fringe:
+        node = min(fringe, key=lambda x: x.cost)
+        fringe.remove(node) # remove the node selected for expansion from the fringe
+        # print(f"Node {node.state}, cost: {node.approx_cost}")
+        # expand the node
+        children = expand_node(node_to_expand=node)  
+
+        # check if the goal state has been reached
+        if children == None:
+            print_memory_usage()
+            # node is the result
+            result = {
+                'goal_node': node,
+                'expanded_nodes': counter.expanded_nodes,
+                'nodes_in_fringe': len(fringe)
+            }
+            return result   
+        counter.expanded_nodes += 1  # increment the number of expanded nodes
+        # compute the heuristic value for each child
+        for child in children:
+            child.cost = chosen_heuristic(child.state, goal_dict)
+        fringe.extend(children)
+    print(f"No solution found whitin the depth limit of 30")
 
 def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
     '''A* algorithm to solve the 8-puzzle, returns a dictionary with the
@@ -235,7 +275,8 @@ if __name__ == "__main__":
     '328407615',
     '513824076',
     '142807365',
-    '281503476'
+    '281503476',
+    '561702438',
     ]
     assert create_matrix('102743865') == [[1, 0, 2], [7, 4, 3], [8, 6, 5]]
     assert create_matrix('328407615') == [[3, 2, 8], [4, 0, 7], [6, 1, 5]]
@@ -247,7 +288,7 @@ if __name__ == "__main__":
     }  # used to calculate the heuristic value
     goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
     times = []
-    algorithms = [A_star, BFS, limited_DFS]
+    algorithms = [greedy_search, A_star]
     i = 1
     if i == 0:
         results = []
@@ -263,12 +304,18 @@ if __name__ == "__main__":
             print_results(result, times[-1])
             print("\n")
     elif i == 1:
-        print("\n\nStart sequence: 102743865")
+        print("\n\nStart sequence: 812574063")
         for algorithm in algorithms:
             print(f"\n\tAlgorithm: {algorithm.__name__}")        
             start_time = time.time()
-            result = algorithm(start_sequence, goal_state)
+            result = algorithm(create_matrix('513824076'), goal_state)
             print_results(result, time.time() - start_time)
+            result = None # remove the reference to the result otherwise it will not be deleted by the garbage collected
+            # Some programs manage large amounts of data or create temporary objects 
+            # that consume significant memory.
+            # If result is not explicitly set to None (or some other non-referencing value), 
+            # the reference to the object remains, 
+            # preventing Python from reclaiming the memory used by the object.
     else:
         print("\n\nStart sequence: 120453786: goal = 102453786")
         goal_state = [[1, 0, 2], [4, 5, 3], [7, 8, 6]]
