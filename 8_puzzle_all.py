@@ -106,6 +106,18 @@ def print_children(children: list[Node_8_puzzle]) -> None:
         print(f"State: {child.state}. Cost: {child.cost}")
     return None
 
+def standardise_result(node: Node_8_puzzle, counter, fringe) -> list[str]:
+    result = {
+        'goal_node': node,
+        'expanded_nodes': counter.expanded_nodes,
+        'nodes_in_fringe': len(fringe)
+    }
+    return result
+
+def print_depth_limit_reached(depth: int) -> None:
+    print(f"\tDepth limit reached at depth {depth}\n")
+    return None 
+
 def print_action_sequence(goal_node: Node_8_puzzle) -> None:
     actions = []
     while goal_node.parent != None:
@@ -137,16 +149,10 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
         children = expand_node(node_to_expand=node, max_depth=max_step)
         if isinstance(children,int) and children == 0:
             print_memory_usage()
-            result = {
-                'goal_node': node,
-                'expanded_nodes': counter.expanded_nodes,
-                'nodes_in_fringe': len(fringe)
-            }
-            return result
+            return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                print(f"\tDepth limit reached at depth {children}\n")
-                return None
+                return print_depth_limit_reached(children)
             continue
         counter.expanded_nodes += 1
         fringe.extend(children)
@@ -163,16 +169,10 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
         if isinstance(children, int) and children == 0:
             # goal state reached
             print_memory_usage()
-            result = {
-                'goal_node': node,
-                'expanded_nodes': counter.expanded_nodes,
-                'nodes_in_fringe': len(fringe)
-            }
-            return result
+            return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                print(f"\tDepth limit reached at depth {children}\n")
-                return None
+                return print_depth_limit_reached(children)
             continue
         # the garbage collector will remove the nodes that are not needed or referenced
         fringe = children + fringe
@@ -201,16 +201,10 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
         if isinstance(children, int) and children == 0:
             print_memory_usage()
             # node is the result
-            result = {
-                'goal_node': node,
-                'expanded_nodes': counter.expanded_nodes,
-                'nodes_in_fringe': len(fringe)
-            }
-            return result   
+            return standardise_result(node, counter, fringe) 
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                print(f"\tDepth limit reached at depth {children}\n")
-                return None
+                return print_depth_limit_reached(children)
             continue
         counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child
@@ -249,16 +243,10 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
         if isinstance(children, int) and children == 0:
             print_memory_usage()
             # node is the result
-            result = {
-                'goal_node': node,
-                'expanded_nodes': counter.expanded_nodes,
-                'nodes_in_fringe': len(fringe)
-            }
-            return result
+            return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                print(f"\tDepth limit reached at depth {children}\n")
-                return None
+                return print_depth_limit_reached(children)
             continue
         counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child + the number of moves 
