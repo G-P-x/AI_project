@@ -1,7 +1,7 @@
 def h1(goal: dict, state: list) -> int:
     '''Not admissible heuristic function'''
-    assert(isinstance(goal, dict), "goal must be a dictionary")
-    assert(isinstance(state, list), "state must be a list")
+    assert isinstance(goal, dict), "goal must be a dictionary"
+    assert isinstance(state, list), "state must be a list"
 
     distance = 0
     total_distance = 0
@@ -15,8 +15,8 @@ def h1(goal: dict, state: list) -> int:
 
 def manhattan_distance(goal: dict, state: list) -> int:
     '''Manhattan distance heuristic function'''
-    assert(isinstance(goal, dict), "goal must be a dictionary")
-    assert(isinstance(state, list), "state must be a list")
+    assert isinstance(goal, dict), "goal must be a dictionary"
+    assert isinstance(state, list), "state must be a list"
     distance = 0
     for row in range(3):
         for col in range(3):
@@ -36,9 +36,12 @@ def heuristic_manhattan_distance(state: list[list[int]], goal: dict) -> int:
     return distance
 
 def h_2(state: list[list[int]], goal: dict):
+    '''Unadmissible heuristic function'''
     # calculate the number of moves that each tile is from its goal position
     # for each tile in the current state, calculate the manhattan distance to its goal position
     # sum all the distances to get the heuristic value
+
+    #just find out that also this one is not admissible, 812574063 gets 22 moves instead of 20.
     assert isinstance(goal, dict), "goal must be a dictionary"
     assert isinstance(state, list), "state must be a list"
     distance = 0

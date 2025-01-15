@@ -9,7 +9,7 @@ class Node_8_puzzle():
     def __init__(self, parent: 'Node_8_puzzle', state: list[list], action: str):
         self.parent = parent  # pointer to the parent node
         self.state = state
-        self.n_moves = parent.n_moves + 1 if parent else 0
+        self.n_moves = parent.n_moves + 1 if parent else 0  # this is basically the depth of the node in the tree
         self.action = "root node" if parent is None else action 
         self.cost = 0
 
@@ -77,10 +77,15 @@ def set_of_actions(row: int, col: int):
         actions.append(right)
     return actions
 
-def expand_node(node_to_expand: Node_8_puzzle, max_moves = 30) -> list[Node_8_puzzle]:
-    '''expand the node and return the children nodes with only parent, state and action. None if the goal state is reached'''
+def expand_node(node_to_expand: Node_8_puzzle, max_depth) -> list[Node_8_puzzle]:
+    '''expands the node and returns 
+    -   children nodes with parent, state and action. 
+    -   0 if the goal state is reached;
+    -   1 if the depth limit is reached'''
     if node_to_expand.state == goal_state:
-        return None
+        return 0
+    if node_to_expand.n_moves >= max_depth: # depth limit reached
+        return 1
     children = []
     b_row, b_col = find_blank_tile(node_to_expand.state)  # find the blank tile
     actions = set_of_actions(b_row, b_col)
@@ -89,8 +94,9 @@ def expand_node(node_to_expand: Node_8_puzzle, max_moves = 30) -> list[Node_8_pu
         # check if the child state is already in the path
         if not check_already_visited(child_state, node_to_expand):
             child = Node_8_puzzle(parent=node_to_expand, state=child_state, action=action.__name__)
-            if child.n_moves > max_moves:
+            if child.n_moves > max_depth:
                 continue
+                # here I should return something to indicate that the depth limit has been reached
             children.append(child)
     return children
 
@@ -113,8 +119,8 @@ def print_action_sequence(goal_node: Node_8_puzzle) -> None:
 def chosen_heuristic(state: list[list[int]], goal: dict):
     # return h_f_.h_3(state, goal)
     # return h_f_.bad_heuristic(state, goal)
-    return h_f_.h_2(state, goal)
-    # return h_f_.manhattan_distance(goal, state)
+    # return h_f_.h_2(state, goal)
+    return h_f_.manhattan_distance(goal, state)
 
 def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
     '''Breadth-first search algorithm to solve the 8-puzzle, returns a dictionary with the
@@ -128,8 +134,8 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
     max_step = 10
     while fringe:
         node = fringe.pop(0)
-        children = expand_node(node_to_expand=node, max_moves=max_step)
-        if children == None:
+        children = expand_node(node_to_expand=node, max_depth=max_step)
+        if children == 0:
             print_memory_usage()
             result = {
                 'goal_node': node,
@@ -137,6 +143,9 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
                 'nodes_in_fringe': len(fringe)
             }
             return result
+        if children == 1:
+            print(f"Depth limit reached")
+            return None
         counter.expanded_nodes += 1
         fringe.extend(children)
     print("No solution found within the depth limit of {n}".format(n=max_step))
@@ -148,8 +157,8 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
     while fringe:
         node = fringe.pop(0)
         counter.expanded_nodes += 1
-        children = expand_node(node_to_expand=node, max_moves=limit)
-        if children is None:
+        children = expand_node(node_to_expand=node, max_depth=limit)
+        if children == 0:
             # goal state reached
             print_memory_usage()
             result = {
@@ -158,10 +167,12 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
                 'nodes_in_fringe': len(fringe)
             }
             return result
-        # if node.n_moves >= limit:
-        #     continue
+        if children == 1:
+            print(f"Depth limit reached")
+            return None
         # the garbage collector will remove the nodes that are not needed or referenced
         fringe = children + fringe
+    print(f"No solution found within the depth limit of {limit}")
 
 def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str: any]:
     '''Greedy search algorithm to solve the 8-puzzle, returns a dictionary with the
@@ -182,10 +193,8 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
         fringe.remove(node) # remove the node selected for expansion from the fringe
         # print(f"Node {node.state}, cost: {node.approx_cost}")
         # expand the node
-        children = expand_node(node_to_expand=node)  
-
-        # check if the goal state has been reached
-        if children == None:
+        children = expand_node(node_to_expand=node, max_depth=30)  
+        if children == 0:
             print_memory_usage()
             # node is the result
             result = {
@@ -194,6 +203,9 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
                 'nodes_in_fringe': len(fringe)
             }
             return result   
+        if children == 1:
+            print(f"Depth limit reached")
+            return None
         counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child
         for child in children:
@@ -225,10 +237,10 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
         fringe.remove(node) # remove the node selected for expansion from the fringe
         # print(f"Node {node.state}, cost: {node.approx_cost}")
         # expand the node
-        children = expand_node(node_to_expand=node)  
+        children = expand_node(node_to_expand=node, max_depth=30)  
 
         # check if the goal state has been reached
-        if children == None:
+        if children == 0:
             print_memory_usage()
             # node is the result
             result = {
@@ -236,13 +248,16 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
                 'expanded_nodes': counter.expanded_nodes,
                 'nodes_in_fringe': len(fringe)
             }
-            return result   
+            return result
+        if children == 1:
+            print(f"Depth limit reached")
+            return None
         counter.expanded_nodes += 1  # increment the number of expanded nodes
-        # compute the heuristic value for each child
+        # compute the heuristic value for each child + the number of moves 
         for child in children:
             child.cost = chosen_heuristic(child.state, goal_dict) + child.n_moves   
         fringe.extend(children)
-    print(f"No solution found whitin the depth limit of 30")
+    #print(f"No solution found whitin the depth limit of 30")
 
 def create_matrix(values: str):
     assert len(values) == 9, "The length of the sequence must be 9"
@@ -258,18 +273,12 @@ def print_results(result: dict[str: any], finish_time) -> None:
     print_action_sequence(goal_node=result['goal_node'])
     return None
 
-def print_memory_usage():
+def print_memory_usage() -> None:
     objects_in_memory = [obj for obj in gc.get_objects() if isinstance(obj, Node_8_puzzle)]
     print(f"\tnodes in memory: {len(objects_in_memory)}" )
+    return None
+
 if __name__ == "__main__":
-    # initial state of the 8-puzzle
-    # start_sequences = {
-    #     1: '102743865', # solution at depth 9
-    #     2: '328407615', # solution at depth 28
-    #     3: '513824076', # solution at depth 16
-    #     4: '142807365', # solution at depth 20
-    #     5: '281503476', # solution at depth 16
-    # }
     start_sequences = [
     '102743865',
     '328407615',
@@ -289,26 +298,28 @@ if __name__ == "__main__":
     goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
     times = []
     algorithms = [greedy_search, A_star]
-    i = 1
+    i = 0
     if i == 0:
+        # here I cannot use the memory profiler because it will not work with the garbage collector 
+        # since I'm keeping references to the nodes in the results list
         results = []
-        # A_star(start_sequence, goal_state)
         for s in start_sequences:
-            # print(f"Start sequence: {start_sequences[s]}")
             print(f"Start sequence: {s}")
-            start_time = time.time()
-            # result = A_star(create_matrix(start_sequences[s]), goal_state)
-            result = A_star(create_matrix(s), goal_state)
-            times.append(time.time() - start_time)
-            results.append(result)
-            print_results(result, times[-1])
-            print("\n")
+            for algorithm in algorithms:
+                print(f"\n\tAlgorithm: {algorithm.__name__}")
+                start_time = time.time()
+                result = algorithm(create_matrix(s), goal_state)
+                if result is not None:
+                    times.append(time.time() - start_time)
+                    results.append(result)
+                    print_results(result, times[-1])
+                    print("\n")
     elif i == 1:
         print("\n\nStart sequence: 812574063")
         for algorithm in algorithms:
             print(f"\n\tAlgorithm: {algorithm.__name__}")        
             start_time = time.time()
-            result = algorithm(create_matrix('513824076'), goal_state)
+            result = algorithm(create_matrix('812574063'), goal_state)
             print_results(result, time.time() - start_time)
             result = None # remove the reference to the result otherwise it will not be deleted by the garbage collected
             # Some programs manage large amounts of data or create temporary objects 
