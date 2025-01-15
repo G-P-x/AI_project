@@ -81,11 +81,11 @@ def expand_node(node_to_expand: Node_8_puzzle, max_depth) -> list[Node_8_puzzle]
     '''expands the node and returns 
     -   children nodes with parent, state and action. 
     -   0 if the goal state is reached;
-    -   1 if the depth limit is reached'''
+    -   depth limit value if the depth limit is reached'''
     if node_to_expand.state == goal_state:
         return 0
     if node_to_expand.n_moves >= max_depth: # depth limit reached
-        return 1
+        return max_depth
     children = []
     b_row, b_col = find_blank_tile(node_to_expand.state)  # find the blank tile
     actions = set_of_actions(b_row, b_col)
@@ -135,7 +135,7 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
     while fringe:
         node = fringe.pop(0)
         children = expand_node(node_to_expand=node, max_depth=max_step)
-        if children == 0:
+        if isinstance(children,int) and children == 0:
             print_memory_usage()
             result = {
                 'goal_node': node,
@@ -143,9 +143,11 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
                 'nodes_in_fringe': len(fringe)
             }
             return result
-        if children == 1:
-            print(f"Depth limit reached")
-            return None
+        if isinstance(children, int) and children > 0:
+            if fringe == []:
+                print(f"\tDepth limit reached at depth {children}\n")
+                return None
+            continue
         counter.expanded_nodes += 1
         fringe.extend(children)
     print("No solution found within the depth limit of {n}".format(n=max_step))
@@ -158,7 +160,7 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
         node = fringe.pop(0)
         counter.expanded_nodes += 1
         children = expand_node(node_to_expand=node, max_depth=limit)
-        if children == 0:
+        if isinstance(children, int) and children == 0:
             # goal state reached
             print_memory_usage()
             result = {
@@ -167,9 +169,11 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
                 'nodes_in_fringe': len(fringe)
             }
             return result
-        if children == 1:
-            print(f"Depth limit reached")
-            return None
+        if isinstance(children, int) and children > 0:
+            if fringe == []:
+                print(f"\tDepth limit reached at depth {children}\n")
+                return None
+            continue
         # the garbage collector will remove the nodes that are not needed or referenced
         fringe = children + fringe
     print(f"No solution found within the depth limit of {limit}")
@@ -194,7 +198,7 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
         # print(f"Node {node.state}, cost: {node.approx_cost}")
         # expand the node
         children = expand_node(node_to_expand=node, max_depth=30)  
-        if children == 0:
+        if isinstance(children, int) and children == 0:
             print_memory_usage()
             # node is the result
             result = {
@@ -203,9 +207,11 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
                 'nodes_in_fringe': len(fringe)
             }
             return result   
-        if children == 1:
-            print(f"Depth limit reached")
-            return None
+        if isinstance(children, int) and children > 0:
+            if fringe == []:
+                print(f"\tDepth limit reached at depth {children}\n")
+                return None
+            continue
         counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child
         for child in children:
@@ -240,7 +246,7 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
         children = expand_node(node_to_expand=node, max_depth=30)  
 
         # check if the goal state has been reached
-        if children == 0:
+        if isinstance(children, int) and children == 0:
             print_memory_usage()
             # node is the result
             result = {
@@ -249,9 +255,11 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
                 'nodes_in_fringe': len(fringe)
             }
             return result
-        if children == 1:
-            print(f"Depth limit reached")
-            return None
+        if isinstance(children, int) and children > 0:
+            if fringe == []:
+                print(f"\tDepth limit reached at depth {children}\n")
+                return None
+            continue
         counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child + the number of moves 
         for child in children:
@@ -297,7 +305,7 @@ if __name__ == "__main__":
     }  # used to calculate the heuristic value
     goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
     times = []
-    algorithms = [greedy_search, A_star]
+    algorithms = [greedy_search, A_star, limited_DFS, BFS]
     i = 0
     if i == 0:
         # here I cannot use the memory profiler because it will not work with the garbage collector 
