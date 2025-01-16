@@ -4,78 +4,17 @@ import time
 import charts as ch
 import heuristic_functions as h_f_
 import gc
-
-class Node_8_puzzle():
-    def __init__(self, parent: 'Node_8_puzzle', state: list[list], action: str):
-        self.parent = parent  # pointer to the parent node
-        self.state = state
-        self.n_moves = parent.n_moves + 1 if parent else 0  # this is basically the depth of the node in the tree
-        self.action = "root node" if parent is None else action 
-        self.cost = 0
-
-def find_blank_tile(state: list[list[int]]):
-    for l in state:
-        if 0 in l:
-            row = state.index(l)
-            col = l.index(0)
-            break
-    return row, col
-
-def check_if_node_in_path(node: Node_8_puzzle):
-    '''check if the node is already in the path'''
-    while node.parent != None:
-        if node.parent.state == node.state:
-            return True
-        node = node.parent
-    return False
+import print_function as pf
+from problem_definition import Node_8_puzzle
+import problem_definition as act
 
 def check_already_visited(state: list[list[int]], parent: Node_8_puzzle):
+    '''check if the state is already in the path before creating a new node'''
     while parent != None:
         if parent.state == state:
             return True
         parent = parent.parent
     return False
-
-def up(node_up: Node_8_puzzle, row: int, col: int):
-    '''swap the blank tile with the tile above it'''
-    new_state = copy.deepcopy(node_up.state)
-    new_state[row][col] = new_state[row - 1][col]
-    new_state[row-1][col] = node_up.state[row][col]
-    return new_state
-
-def down(node_down: Node_8_puzzle, row: int, col: int):
-    '''swap the blank tile with the tile below it'''
-    new_state = copy.deepcopy(node_down.state)
-    new_state[row][col] = new_state[row + 1][col]
-    new_state[row+1][col] = node_down.state[row][col]
-    return new_state
-
-def left(node_left: Node_8_puzzle, row: int, col: int):
-    '''swap the blank tile with the tile to the left of it'''
-    new_state = copy.deepcopy(node_left.state)
-    new_state[row][col] = new_state[row][col - 1]
-    new_state[row][col-1] = node_left.state[row][col]
-    return new_state
-
-def right(node_right: Node_8_puzzle, row: int, col: int):
-    '''swap the blank tile with the tile to the right of it'''
-    new_state = copy.deepcopy(node_right.state)
-    new_state[row][col] = new_state[row][col + 1]
-    new_state[row][col+1] = node_right.state[row][col]
-    return new_state
-
-
-def set_of_actions(row: int, col: int):
-    actions = []
-    if row > 0:
-        actions.append(up)
-    if row < 2:
-        actions.append(down)
-    if col > 0:
-        actions.append(left)
-    if col < 2:
-        actions.append(right)
-    return actions
 
 def expand_node(node_to_expand: Node_8_puzzle, max_depth) -> list[Node_8_puzzle]:
     '''expands the node and returns 
@@ -87,24 +26,18 @@ def expand_node(node_to_expand: Node_8_puzzle, max_depth) -> list[Node_8_puzzle]
     if node_to_expand.n_moves >= max_depth: # depth limit reached
         return max_depth
     children = []
-    b_row, b_col = find_blank_tile(node_to_expand.state)  # find the blank tile
-    actions = set_of_actions(b_row, b_col)
+    b_row, b_col = act.find_blank_tile(node_to_expand.state)  # find the blank tile
+    actions = act.set_of_actions(b_row, b_col)
     for action in actions:
         child_state = action(node_to_expand, b_row, b_col)
         # check if the child state is already in the path
-        if not check_already_visited(child_state, node_to_expand):
+        if not act.check_already_visited(child_state, node_to_expand):
             child = Node_8_puzzle(parent=node_to_expand, state=child_state, action=action.__name__)
             if child.n_moves > max_depth:
                 continue
                 # here I should return something to indicate that the depth limit has been reached
             children.append(child)
     return children
-
-def print_children(children: list[Node_8_puzzle]) -> None:
-    '''debugging function to print the children nodes'''
-    for child in children:
-        print(f"State: {child.state}. Cost: {child.cost}")
-    return None
 
 def standardise_result(node: Node_8_puzzle, counter, fringe) -> list[str]:
     result = {
@@ -113,20 +46,6 @@ def standardise_result(node: Node_8_puzzle, counter, fringe) -> list[str]:
         'nodes_in_fringe': len(fringe)
     }
     return result
-
-def print_depth_limit_reached(depth: int) -> None:
-    print(f"\tDepth limit reached at depth {depth}\n")
-    return None 
-
-def print_action_sequence(goal_node: Node_8_puzzle) -> None:
-    actions = []
-    while goal_node.parent != None:
-        actions.append(goal_node.action)
-        goal_node = goal_node.parent
-    actions.reverse()
-    print(f"\t{actions}")
-    print("\tNumber of moves: ", len(actions))
-    return None
 
 def chosen_heuristic(state: list[list[int]], goal: dict):
     # return h_f_.h_3(state, goal)
@@ -152,7 +71,7 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
             return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                return print_depth_limit_reached(children)
+                return pf.print_depth_limit_reached(children)
             continue
         counter.expanded_nodes += 1
         fringe.extend(children)
@@ -172,7 +91,7 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
             return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                return print_depth_limit_reached(children)
+                return pf.print_depth_limit_reached(children)
             continue
         # the garbage collector will remove the nodes that are not needed or referenced
         fringe = children + fringe
@@ -204,7 +123,7 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
             return standardise_result(node, counter, fringe) 
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                return print_depth_limit_reached(children)
+                return pf.print_depth_limit_reached(children)
             continue
         counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child
@@ -246,7 +165,7 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
             return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                return print_depth_limit_reached(children)
+                return pf.print_depth_limit_reached(children)
             continue
         counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child + the number of moves 
@@ -262,13 +181,7 @@ def create_matrix(values: str):
         matrix.append([int(values[i]), int(values[i+1]), int(values[i+2])])
     return matrix
 
-def print_results(result: dict[str: any], finish_time) -> None:
-    '''print the results of the search algorithm'''
-    print(f"\tExpanded nodes: {result['expanded_nodes']}. Nodes in fringe: {result['nodes_in_fringe']}")
-    print("\tExecution time: {:.8f} milliseconds".format(finish_time * 1000))
-    print_action_sequence(goal_node=result['goal_node'])
-    return None
-
+# must stay in the same file as the functions that use it otherwise it will not work
 def print_memory_usage() -> None:
     objects_in_memory = [obj for obj in gc.get_objects() if isinstance(obj, Node_8_puzzle)]
     print(f"\tnodes in memory: {len(objects_in_memory)}" )
@@ -308,7 +221,7 @@ if __name__ == "__main__":
                 if result is not None:
                     times.append(time.time() - start_time)
                     results.append(result)
-                    print_results(result, times[-1])
+                    pf.print_results(result, times[-1])
                     print("\n")
     elif i == 1:
         print("\n\nStart sequence: 812574063")
@@ -316,7 +229,7 @@ if __name__ == "__main__":
             print(f"\n\tAlgorithm: {algorithm.__name__}")        
             start_time = time.time()
             result = algorithm(create_matrix('812574063'), goal_state)
-            print_results(result, time.time() - start_time)
+            pf.print_results(result, time.time() - start_time)
             result = None # remove the reference to the result otherwise it will not be deleted by the garbage collected
             # Some programs manage large amounts of data or create temporary objects 
             # that consume significant memory.
@@ -330,7 +243,7 @@ if __name__ == "__main__":
         start_sequence = create_matrix('120453786')
         start_time = time.time()
         result = limited_DFS(start_sequence, goal_state)
-        print_results(result, time.time() - start_time)
+        pf.print_results(result, time.time() - start_time)
 
     
     # ch.plot_sequence_results_A_star(start_sequences, times, [r['nodes_in_fringe'] for r in results], [r['expanded_nodes'] for r in results])
