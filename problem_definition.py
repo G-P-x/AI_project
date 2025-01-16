@@ -38,6 +38,8 @@ def right(node_right: Node_8_puzzle, row: int, col: int):
     new_state[row][col+1] = node_right.state[row][col]
     return new_state
 
+# maybe, this function should be in the 8_puzzle_all.py file since it is mostly
+# releated to the algorithm and not the problem definition
 def check_already_visited(state: list[list[int]], parent: Node_8_puzzle):
     while parent != None:
         if parent.state == state:
@@ -46,6 +48,7 @@ def check_already_visited(state: list[list[int]], parent: Node_8_puzzle):
     return False
 
 def find_blank_tile(state: list[list[int]]):
+    '''return the row and column of the blank tile'''
     for l in state:
         if 0 in l:
             row = state.index(l)
@@ -54,6 +57,7 @@ def find_blank_tile(state: list[list[int]]):
     return row, col
 
 def set_of_actions(row: int, col: int):
+    '''return the set of actions that can be taken from the current state'''
     actions = []
     if row > 0:
         actions.append(up)
