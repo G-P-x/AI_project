@@ -45,49 +45,35 @@ def plot_sequence_results_A_star(sequences: list[str], execution_times: list[flo
     # Show plot
     plt.show()
 
-def plot_algorithms(algorithms: list[str], execution_times: list[str], nodes_in_fringe: int, nodes_expanded: int, sequence: str):
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
-    bar_width = 0.2
-    n = len(algorithms)
-    r1 = np.arange(n)
-    r2 = [x + bar_width for x in r1]
-
-    # Plotting Execution Time
-
-    ax1.bar(algorithms, execution_times, color='b', width=bar_width, edgecolor='grey', label='Execution Time (s)')
-    ax1.set_xlabel('Algorithm', fontweight='bold')
-    ax1.set_ylabel('Time (seconds)', fontweight='bold')
-    ax1.set_title('Execution Time Comparison')
-    ax1.legend()
-
-    # Plotting Nodes in Fringe and Expanded
-    ax2.bar(r1, nodes_in_fringe, color='r', width=bar_width, edgecolor='grey', label='Nodes in Fringe')
-    ax2.bar(r2, nodes_expanded, color='g', width=bar_width, edgecolor='grey', label='Nodes Expanded')
-    ax2.set_xlabel('Algorithm', fontweight='bold')
-    ax2.set_ylabel('Number of Nodes', fontweight='bold')
-    ax2.set_title('Nodes Generated Comparison')
-    ax2.set_xticks([r + bar_width/2 for r in range(n)])
-    ax2.set_xticklabels(algorithms)
-    ax2.legend()
+def plot_algorithms_computational_complexity(algorithms: list[str], expanded_nodes: list[int], sequence: str):
+    '''Plots the computational complexity of the algorithms in terms nodes expanded'''
+    assert isinstance(algorithms, list), "algorithms must be a list"
+    assert len(algorithms) == 4, "algorithms must have 4 elements"
+    assert len(expanded_nodes) == 4, "expanded_nodes must have 4 elements"
+    assert isinstance(expanded_nodes, list), "expanded_nodes must be a list"
+    assert len(algorithms) == len(expanded_nodes), "algorithms and expanded_nodes must have the same length"
+    assert isinstance(sequence, str), "sequence must be a string"
+    plt.bar(algorithms, expanded_nodes, color='b', width=0.2, align="center", edgecolor='grey', label='Nodes Expanded')
+    plt.xlabel('Algorithm', fontweight='bold')
+    plt.ylabel('Node Expanded', fontweight='bold')
+    plt.title(f'Computational Complexity Comparison: {sequence}')
+    # plt.legend()
     # Adjust layout
     plt.tight_layout()
     # Show plot
     plt.show()
 
-
-def plots():
-    algoritms = ['A*', 'BFS', 'DFS', 'Greedy', 'UCS']
-    execution_time = [0.0001, 0.0002, 0.0003, 0.0004, 0.0005]
-    expanded_nodes = [10, 20, 30, 40, 50]
-    plt.bar(algoritms, execution_time)
-
-    plt.show()
+def plot_algorithms_memory_usage(algorithms: list[str], nodes_in_fringe: int, nodes_expanded: int, sequence: str):
+    '''Plots the memory usage of the algorithms in terms nodes expanded'''
+    pass
 
 if __name__ == "__main__":
     # plots()
-    algoritms = ['A*', 'BFS', 'DFS', 'Greedy', 'UCS']
-    execution_time = [0.0001, 0.0002, 0.0003, 0.0004, 0.0005]
-    nodes_in_fringe = [10, 20, 30, 40, 50]
-    expanded_nodes = [10, 60, 40, 50, 60]
-    sequence = '102743865'
-    plot_algorithms(algoritms, execution_time, nodes_in_fringe, expanded_nodes, sequence)
+    algoritms = ['A*', 'BFS', 'limited_DFS', 'Greedy']
+    # execution_time = [0.0001, 0.0002, 0.0003, 0.0004, 0.0005]
+    sequences = ['102743865', '102743865', '102743865']
+    for s in sequences:
+        nodes_in_fringe = [10, 20, 30, 40, 50]
+        expanded_nodes = [10, 60, 40, 50]
+        sequence = s
+        plot_algorithms_computational_complexity(algoritms, expanded_nodes, sequence)

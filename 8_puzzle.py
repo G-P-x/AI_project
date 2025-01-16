@@ -71,7 +71,13 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
             return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                return pf.print_depth_limit_reached(children)
+                pf.print_depth_limit_reached(children)
+                result = {
+                    'goal_node': None,
+                    'expanded_nodes': counter.expanded_nodes,
+                    'nodes_in_fringe': len(fringe)
+                }
+                return result
             continue
         counter.expanded_nodes += 1
         fringe.extend(children)
@@ -91,7 +97,13 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
             return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                return pf.print_depth_limit_reached(children)
+                pf.print_depth_limit_reached(children)
+                result = {
+                    'goal_node': None,
+                    'expanded_nodes': counter.expanded_nodes,
+                    'nodes_in_fringe': len(fringe)
+                }
+                return result
             continue
         # the garbage collector will remove the nodes that are not needed or referenced
         fringe = children + fringe
@@ -123,7 +135,13 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
             return standardise_result(node, counter, fringe) 
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                return pf.print_depth_limit_reached(children)
+                pf.print_depth_limit_reached(children)
+                result = {
+                    'goal_node': None,
+                    'expanded_nodes': counter.expanded_nodes,
+                    'nodes_in_fringe': len(fringe)
+                }
+                return result
             continue
         counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child
@@ -218,11 +236,18 @@ if __name__ == "__main__":
                 print(f"\n\tAlgorithm: {algorithm.__name__}")
                 start_time = time.time()
                 result = algorithm(create_matrix(s), goal_state)
-                if result is not None:
+                results.append(result)
+                if result["goal_node"] is not None:
                     times.append(time.time() - start_time)
-                    results.append(result)
                     pf.print_results(result, times[-1])
                     print("\n")
+        i = 0
+        for s in start_sequences:
+            expanded_nodes = [r['expanded_nodes'] for r in results][i: i + len(algorithms)]
+            str_algorithms = [al.__name__ for al in algorithms]
+            ch.plot_algorithms_computational_complexity(str_algorithms, expanded_nodes, s)
+            i+= len(algorithms)
+            
     elif i == 1:
         print("\n\nStart sequence: 812574063")
         for algorithm in algorithms:
