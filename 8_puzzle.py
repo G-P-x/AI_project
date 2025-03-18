@@ -66,12 +66,13 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
     while fringe:
         node = fringe.pop(0)
         children = expand_node(node_to_expand=node, max_depth=max_step)
+        counter.expanded_nodes += 1 # moved here because it should be incremented even if the node doesn't have children
         if isinstance(children,int) and children == 0:
             print_memory_usage()
             return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                pf.print_depth_limit_reached(children)
+                print(f"\tNo solution found within the depth limit of {max_step}")
                 result = {
                     'goal_node': None,
                     'expanded_nodes': counter.expanded_nodes,
@@ -79,7 +80,6 @@ def BFS(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[str
                 }
                 return result
             continue
-        counter.expanded_nodes += 1
         fringe.extend(children)
     print("No solution found within the depth limit of {n}".format(n=max_step))
 
@@ -97,7 +97,7 @@ def limited_DFS(initial_state: list[list[int]], goal_state: list[list[int]], lim
             return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                pf.print_depth_limit_reached(children)
+                print(f"\tNo solution found within the depth limit of {limit}")
                 result = {
                     'goal_node': None,
                     'expanded_nodes': counter.expanded_nodes,
@@ -126,6 +126,8 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
     while fringe:
         node = min(fringe, key=lambda x: x.cost)
         fringe.remove(node) # remove the node selected for expansion from the fringe
+        counter.expanded_nodes += 1  # increment the number of expanded nodes
+        # moved here because it should be incremented even if the node doesn't have children
         # print(f"Node {node.state}, cost: {node.approx_cost}")
         # expand the node
         children = expand_node(node_to_expand=node, max_depth=30)  
@@ -135,7 +137,7 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
             return standardise_result(node, counter, fringe) 
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                pf.print_depth_limit_reached(children)
+                print(f"\tNo solution found within the depth limit of 30")
                 result = {
                     'goal_node': None,
                     'expanded_nodes': counter.expanded_nodes,
@@ -143,7 +145,6 @@ def greedy_search(initial_state: list[list[int]], goal_state: list[list[int]]) -
                 }
                 return result
             continue
-        counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child
         for child in children:
             child.cost = chosen_heuristic(child.state, goal_dict)
@@ -175,7 +176,8 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
         # print(f"Node {node.state}, cost: {node.approx_cost}")
         # expand the node
         children = expand_node(node_to_expand=node, max_depth=30)  
-
+        counter.expanded_nodes += 1  # increment the number of expanded nodes
+        # moved here because it should be incremented even if the node doesn't have children
         # check if the goal state has been reached
         if isinstance(children, int) and children == 0:
             print_memory_usage()
@@ -183,9 +185,14 @@ def A_star(initial_state: list[list[int]], goal_state: list[list[int]]) -> dict[
             return standardise_result(node, counter, fringe)
         if isinstance(children, int) and children > 0:
             if fringe == []:
-                return pf.print_depth_limit_reached(children)
+                print(f"\tNo solution found within the depth limit of 30")
+                result = {
+                    'goal_node': None,
+                    'expanded_nodes': counter.expanded_nodes,
+                    'nodes_in_fringe': len(fringe)
+                }
+                return result
             continue
-        counter.expanded_nodes += 1  # increment the number of expanded nodes
         # compute the heuristic value for each child + the number of moves 
         for child in children:
             child.cost = chosen_heuristic(child.state, goal_dict) + child.n_moves   
@@ -237,15 +244,16 @@ if __name__ == "__main__":
                 start_time = time.time()
                 result = algorithm(create_matrix(s), goal_state)
                 results.append(result)
-                if result["goal_node"] is not None:
-                    times.append(time.time() - start_time)
-                    pf.print_results(result, times[-1])
-                    print("\n")
+                times.append(time.time() - start_time)
+                pf.print_results(result, times[-1])
+                print("\n")
+                
+                    
         i = 0
         for s in start_sequences:
             expanded_nodes = [r['expanded_nodes'] for r in results][i: i + len(algorithms)]
             str_algorithms = [al.__name__ for al in algorithms]
-            ch.plot_algorithms_computational_complexity(str_algorithms, expanded_nodes, s)
+            # ch.plot_algorithms_computational_complexity(str_algorithms, expanded_nodes, s)
             i+= len(algorithms)
             
     elif i == 1:

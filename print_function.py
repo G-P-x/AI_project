@@ -24,8 +24,10 @@ def print_action_sequence(goal_node: Node_8_puzzle) -> None:
 def print_results(result: dict[str: any], finish_time) -> None:
     '''print the results of the search algorithm'''
     print(f"\tExpanded nodes: {result['expanded_nodes']}. Nodes in fringe: {result['nodes_in_fringe']}")
-    print("\tExecution time: {:.8f} milliseconds".format(finish_time * 1000))
-    print_action_sequence(goal_node=result['goal_node'])
+    if result['goal_node'] != None:
+        print("\tExecution time: {:.8f} milliseconds".format(finish_time * 1000))
+        print_action_sequence(goal_node=result['goal_node'])
+        return None
     return None
 
 def print_memory_usage() -> None:
